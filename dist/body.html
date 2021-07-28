@@ -1,0 +1,56 @@
+<div class="row">
+  <div class="col span-3-of-4 box">
+    <h2>New videos</h2>
+  </div>
+  <div class="col span-1-of-4 box new-videos"></div>
+</div>
+<div class="row video-container"></div>
+<script>
+  const apiKey = "PUT YOUR API KEY HERE";
+  const playlistId = "UUhIs72whgZI9w6d6FhwGGHA";
+
+  const getVideos = function (playlistId) {
+    const url = `https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails%2Cid%2Csnippet%2Cstatus&playlistId=${playlistId}&key=${apiKey}`;
+    return fetch(url).then((response) => {
+      if (!response.ok)
+        throw new Error(`Something went wrong (${response.status})`);
+      return response.json();
+    });
+  };
+
+  const generateVideoMarkup = function (videoData) {
+    return `<div class="col span-1-of-4 box">
+        <a href="https://www.youtube.com/watch?v=${videoData.snippet.resourceId.videoId}">
+          <img src="${videoData.snippet.thumbnails.medium.url}" alt="${videoData.snippet.title}" />
+          <p>${videoData.snippet.title}</p>
+        </a>
+      </div>`;
+  };
+
+  getVideos(playlistId).then((data) => {
+    const firstVideo = data.items.shift();
+    const markup = `<div class="first col span-2-of-4 box">
+          <a href="https://www.youtube.com/watch?v=${firstVideo.snippet.resourceId.videoId}">
+            <img src="${firstVideo.snippet.thumbnails.high.url}" alt="${firstVideo.snippet.title}" />
+            <p>${firstVideo.snippet.title}</p>
+          </a>
+          <div class="description">
+            <p>${firstVideo.snippet.description
+              .split(" ")
+              .splice(0, 25)
+              .join(" ")}...</p>
+          </div>
+        </div> ${data.items.map(generateVideoMarkup).join("")}`;
+
+    document
+      .querySelector(".video-container")
+      .insertAdjacentHTML("afterbegin", markup);
+
+    document
+      .querySelector(".new-videos")
+      .insertAdjacentHTML(
+        "afterbegin",
+        `<a href="https://www.youtube.com/c/${data.items[0].snippet.videoOwnerChannelTitle.replace(/ +/g, "")}">All videos</a>`
+      );
+  });
+</script>
